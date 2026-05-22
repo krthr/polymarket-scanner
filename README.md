@@ -55,6 +55,8 @@ The app loads YAML from `--config PATH`, or from `POLY_SCAN_CONFIG` when no `--c
 
 Trading-critical decimal values must be quoted strings with up to six decimal places, for example `"0.005000"`. They are parsed into fixed-point integer atoms by `PolyScan::Fixed`; do not write these values as YAML floats.
 
+Unknown configuration keys are rejected at startup. This applies to both top-level options and nested sections such as `http`, `paper_trading`, and `telegram`.
+
 Top-level options:
 
 | Option | Default | Description |
@@ -101,8 +103,8 @@ Telegram options under `telegram`:
 | Option | Default | Description |
 | --- | --- | --- |
 | `enabled` | `false` | Enables the alert scaffold. Current implementation logs readiness/skips and does not send network alerts. |
-| `bot_token_env` | `"POLY_SCAN_TELEGRAM_BOT_TOKEN"` | Name of the environment variable containing the bot token. The token itself is not stored in YAML. |
-| `chat_id_env` | `"POLY_SCAN_TELEGRAM_CHAT_ID"` | Name of the environment variable containing the chat ID. The chat ID itself is not stored in YAML. |
+| `bot_token_env` | unset | Name of the environment variable containing the bot token. The token itself is not stored in YAML. Example configs use `"POLY_SCAN_TELEGRAM_BOT_TOKEN"`. |
+| `chat_id_env` | unset | Name of the environment variable containing the chat ID. The chat ID itself is not stored in YAML. Example configs use `"POLY_SCAN_TELEGRAM_CHAT_ID"`. |
 
 Environment overrides:
 

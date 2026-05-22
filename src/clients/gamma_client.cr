@@ -1,5 +1,6 @@
 require "json"
 require "uri"
+require "./api_models"
 require "./http_client"
 require "../domain/models"
 
@@ -46,8 +47,13 @@ module PolyScan
 
       def self.parse_events(body : String) : Array(Event)
         root = JSON.parse(body)
-        event_nodes = root.as_h?.try { |hash| hash["events"]?.try(&.as_a) } || root.as_a? || [root]
-        event_nodes.map { |node| parse_event(node) }
+        if root.as_h?.try { |hash| hash.has_key?("events") }
+          APIModels::GammaEventsEnvelope.from_json(body).to_domain
+        elsif root.as_a?
+          Array(APIModels::GammaEvent).from_json(body).map(&.to_domain)
+        else
+          [APIModels::GammaEvent.from_json(body).to_domain]
+        end
       end
 
       def self.parse_market_listing_page(root : JSON::Any) : Tuple(Array(Event), String?)
@@ -67,18 +73,6 @@ module PolyScan
 
         next_cursor = root_hash.try { |hash| hash["next_cursor"]?.try(&.as_s?) }
         {events_by_id.values, next_cursor}
-      end
-
-      private def self.parse_event(node : JSON::Any) : Event
-        id = string(node, "id", "event-unknown")
-        slug = string(node, "slug", id)
-        title = string(node, "title", string(node, "name", slug))
-        category = string(node, "category", "unknown")
-        event = Event.new(id, slug, title, category)
-
-        markets = node["markets"]?.try(&.as_a) || [] of JSON::Any
-        event.markets = markets.map { |market_node| parse_market(market_node, event) }
-        event
       end
 
       private def self.event_for_market_listing(node : JSON::Any) : Event
@@ -154,8 +148,8 @@ module PolyScan
           end
         end
 
-        names = parse_string_list(raw) || [] of String
-        token_ids = parse_string_list(node["clobTokenIds"]?) || parse_string_list(node["clob_token_ids"]?) || [] of String
+        names = APIModels::StringArrayConverter.strings_from(raw) || [] of String
+        token_ids = APIModels::StringArrayConverter.strings_from(node["clobTokenIds"]?) || APIModels::StringArrayConverter.strings_from(node["clob_token_ids"]?) || [] of String
         if names.size == 2 && names[0].downcase == "yes" && names[1].downcase == "no" && token_ids.size >= 2
           [Outcome.new(market.id, market.id, market.question, token_ids[0], token_ids[1], nil, Fixed.parse("0.500000"))]
         else
@@ -177,18 +171,6 @@ module PolyScan
           end
           event.markets.each { |market| stored_event.markets << market }
         end
-      end
-
-      private def self.parse_string_list(node : JSON::Any?) : Array(String)?
-        return nil unless node
-        if arr = node.as_a?
-          return arr.map { |item| item.as_s? || item.to_json }
-        end
-        if str = node.as_s?
-          parsed = JSON.parse(str)
-          return parsed.as_a.map { |item| item.as_s? || item.to_json }
-        end
-        nil
       end
 
       private def self.string(node : JSON::Any, key : String, default : String) : String

@@ -9,6 +9,61 @@ describe "fixture parsing" do
     events.first.markets.first.outcomes.first.no_token_id.should eq("no_rain")
   end
 
+  it "parses Gamma string-array outcomes through typed API models" do
+    events = PolyScan::Clients::GammaClient.parse_events(<<-JSON)
+      [
+        {
+          "id": "evt_string_outcomes",
+          "slug": "string-outcomes",
+          "title": "String outcomes",
+          "category": "Test",
+          "ignored_vendor_field": {"still": "ignored"},
+          "markets": [
+            {
+              "id": "m_binary",
+              "slug": "binary-market",
+              "question": "Will the fixture pass?",
+              "active": true,
+              "outcomes": ["Yes", "No"],
+              "clobTokenIds": ["yes_fixture", "no_fixture"]
+            }
+          ]
+        }
+      ]
+      JSON
+
+    market = events.first.markets.first
+    market.outcomes.size.should eq(1)
+    market.outcomes.first.name.should eq("Will the fixture pass?")
+    market.outcomes.first.yes_token_id.should eq("yes_fixture")
+    market.outcomes.first.no_token_id.should eq("no_fixture")
+  end
+
+  it "parses Gamma JSON-string encoded outcome and token lists" do
+    event = PolyScan::Clients::GammaClient.parse_events(<<-JSON).first
+      {
+        "slug": "encoded-lists",
+        "name": "Encoded lists",
+        "markets": [
+          {
+            "id": "m_encoded",
+            "title": "Encoded market title",
+            "outcomes": "[\\"Yes\\",\\"No\\"]",
+            "clob_token_ids": "[\\"yes_encoded\\",\\"no_encoded\\"]"
+          }
+        ]
+      }
+      JSON
+
+    event.id.should eq("event-unknown")
+    event.title.should eq("Encoded lists")
+    market = event.markets.first
+    market.question.should eq("Encoded market title")
+    market.active.should be_true
+    market.outcomes.first.yes_token_id.should eq("yes_encoded")
+    market.outcomes.first.no_token_id.should eq("no_encoded")
+  end
+
   it "parses a CLOB book fixture into fixed-point levels" do
     book = PolyScan::Clients::ClobClient.book_from_file("spec/fixtures/books/yes_wet_ground.json")
     book.token_id.should eq("yes_wet_ground")
@@ -21,6 +76,10 @@ describe "fixture parsing" do
     markets = PolyScan::Clients::ClobClient.parse_sampling_markets(root)
     markets.size.should eq(1)
     markets.first.id.should eq("0xlivecondition")
+    markets.first.event_id.should eq("clob-sampling")
+    markets.first.condition_id.should eq("0xlivecondition")
+    markets.first.question_id.should eq("0xlivequestion")
+    markets.first.accepting_orders.should be_true
     markets.first.outcomes.first.yes_token_id.should eq("live_yes_token")
     markets.first.outcomes.first.no_token_id.should eq("live_no_token")
   end
@@ -46,5 +105,24 @@ describe "fixture parsing" do
 
     missing_token_market = events.find { |event| event.id == "missing-event" }.not_nil!.markets.first
     missing_token_market.outcomes.should be_empty
+  end
+
+  it "parses CLOB book aliases and second timestamps through typed API models" do
+    book = PolyScan::Clients::ClobClient.parse_book(<<-JSON)
+      {
+        "asset_id": "asset-token",
+        "market": "alias-market",
+        "timestamp": "1780000000",
+        "sequence": "9",
+        "unknown_book_field": "ignored",
+        "bids": [{"price": "0.400000", "size": "2.000000"}],
+        "asks": [{"price": "0.600000", "size": "3.000000"}]
+      }
+      JSON
+
+    book.token_id.should eq("asset-token")
+    book.market_id.should eq("alias-market")
+    book.fetched_at_unix_ms.should eq(1_780_000_000_000_i64)
+    book.sequence.should eq(9_i64)
   end
 end
