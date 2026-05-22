@@ -99,7 +99,8 @@ module PolyScan
       end
 
       private def self.bool(node : JSON::Any, key : String, default : Bool) : Bool
-        node[key]?.try(&.as_bool) || default
+        value = node[key]?
+        value ? value.as_bool : default
       end
 
       private def self.optional_fixed(node : JSON::Any, key : String) : Fixed?

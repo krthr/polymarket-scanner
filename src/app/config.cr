@@ -9,9 +9,12 @@ module PolyScan
       property database_path : String = "data/poly_scan.db"
       property gamma_base_url : String = "https://gamma-api.polymarket.com"
       property clob_base_url : String = "https://clob.polymarket.com"
+      property data_source : String = "fixtures"
       property gamma_fixture_path : String = "spec/fixtures/gamma_event.json"
       property clob_books_path : String = "spec/fixtures/books"
       property relationships_path : String = "config/relationships.example.yml"
+      property live_market_limit : Int32 = 25
+      property live_book_limit : Int32 = 50
 
       property scan_size : Fixed = Fixed.one
       property taker_fee_bps : Int32 = 0
@@ -46,9 +49,12 @@ module PolyScan
           config.database_path = string(doc, "database_path", config.database_path)
           config.gamma_base_url = string(doc, "gamma_base_url", config.gamma_base_url)
           config.clob_base_url = string(doc, "clob_base_url", config.clob_base_url)
+          config.data_source = string(doc, "data_source", config.data_source)
           config.gamma_fixture_path = string(doc, "gamma_fixture_path", config.gamma_fixture_path)
           config.clob_books_path = string(doc, "clob_books_path", config.clob_books_path)
           config.relationships_path = string(doc, "relationships_path", config.relationships_path)
+          config.live_market_limit = int32(doc, "live_market_limit", config.live_market_limit)
+          config.live_book_limit = int32(doc, "live_book_limit", config.live_book_limit)
 
           config.scan_size = fixed(doc, "scan_size", config.scan_size)
           config.taker_fee_bps = int32(doc, "taker_fee_bps", config.taker_fee_bps)
@@ -92,14 +98,20 @@ module PolyScan
         @port = ENV["POLY_SCAN_PORT"]?.try(&.to_i32) || @port
         @database_path = ENV["POLY_SCAN_DATABASE_PATH"]? || @database_path
         @relationships_path = ENV["POLY_SCAN_RELATIONSHIPS_PATH"]? || @relationships_path
+        @data_source = ENV["POLY_SCAN_DATA_SOURCE"]? || @data_source
       end
 
       def validate! : Nil
         if @bind_host != "127.0.0.1" && ENV["POLY_SCAN_ALLOW_PUBLIC_BIND"]? != "true"
           raise ArgumentError.new("refusing to bind #{@bind_host}; set POLY_SCAN_ALLOW_PUBLIC_BIND=true only if you understand the risk")
         end
+        unless {"fixtures", "live"}.includes?(@data_source)
+          raise ArgumentError.new("data_source must be fixtures or live")
+        end
         raise ArgumentError.new("scan_size must be positive") unless @scan_size.positive?
         raise ArgumentError.new("rate_limit_per_minute must be positive") unless @http_rate_limit_per_minute > 0
+        raise ArgumentError.new("live_market_limit must be positive") unless @live_market_limit > 0
+        raise ArgumentError.new("live_book_limit must be positive") unless @live_book_limit > 0
       end
 
       private def self.string(node : YAML::Any, key : String, default : String) : String
@@ -119,7 +131,8 @@ module PolyScan
       end
 
       private def self.bool(node : YAML::Any, key : String, default : Bool) : Bool
-        node[key]?.try(&.as_bool) || default
+        value = node[key]?
+        value ? value.as_bool : default
       end
 
       private def self.fixed(node : YAML::Any, key : String, default : Fixed) : Fixed

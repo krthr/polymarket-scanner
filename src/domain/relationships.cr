@@ -97,7 +97,8 @@ module PolyScan
     end
 
     private def self.bool(node : YAML::Any, key : String, default : Bool) : Bool
-      node[key]?.try(&.as_bool) || default
+      value = node[key]?
+      value ? value.as_bool : default
     end
   end
 end

@@ -28,6 +28,14 @@ Then open:
 - `http://127.0.0.1:8765/api/opportunities`
 - `http://127.0.0.1:8765/api/paper-trades`
 
+To see current Polymarket listings instead of fixtures:
+
+```sh
+./poly_scan --config config/live.example.yml --serve
+```
+
+Then open `http://127.0.0.1:8765/api/markets`. Live mode uses public read-only CLOB endpoints: `/sampling-markets` for discovery and `/book?token_id=...` for books. It still does not configure a wallet, private key, auth token, or order-placement endpoint.
+
 ## Configuration
 
 The app loads YAML from `--config PATH`, or from `POLY_SCAN_CONFIG` when no `--config` argument is provided. If neither is set, it uses `config/app.example.yml`.
@@ -43,9 +51,12 @@ Top-level options:
 | `database_path` | `"data/poly_scan.db"` | SQLite database file path. Parent directories are created automatically. |
 | `gamma_base_url` | `"https://gamma-api.polymarket.com"` | Base URL for the read-only Gamma discovery client. The default app flow still uses fixtures. |
 | `clob_base_url` | `"https://clob.polymarket.com"` | Base URL for the read-only CLOB book client. The default app flow still uses fixtures. |
+| `data_source` | `"fixtures"` | `fixtures` loads local JSON fixtures. `live` fetches public read-only CLOB `/sampling-markets` and `/book` data. |
 | `gamma_fixture_path` | `"spec/fixtures/gamma_event.json"` | Fixture file used to load events, markets, and outcomes. |
 | `clob_books_path` | `"spec/fixtures/books"` | Directory containing CLOB order-book JSON fixtures. |
 | `relationships_path` | `"config/relationships.example.yml"` | Manual relationship-rule YAML file. |
+| `live_market_limit` | `25` | Maximum live CLOB markets to fetch from `/sampling-markets`. |
+| `live_book_limit` | `50` | Maximum live token books to fetch from `/book`. Binary markets can use two token books each. |
 | `scan_size` | `"1.000000"` | Fixed-point size used for executable VWAP checks and paper-trade legs. Must be positive. |
 | `taker_fee_bps` | `0` | Taker fee in basis points. Fee is computed on `min(price, 1-price) * size`. |
 | `max_book_age_ms` | `300000` | Maximum book age before stale-book risk and stale penalties apply. |
@@ -92,6 +103,7 @@ Environment overrides:
 | `POLY_SCAN_PORT` | Overrides `port`. |
 | `POLY_SCAN_DATABASE_PATH` | Overrides `database_path`. |
 | `POLY_SCAN_RELATIONSHIPS_PATH` | Overrides `relationships_path`. |
+| `POLY_SCAN_DATA_SOURCE` | Overrides `data_source`; use `live` for current public CLOB data. |
 | `POLY_SCAN_ALLOW_PUBLIC_BIND` | Set to `true` to permit a non-`127.0.0.1` bind. Leave unset for private local use. |
 
 Example:

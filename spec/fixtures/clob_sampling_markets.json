@@ -1,0 +1,36 @@
+{
+  "limit": 2,
+  "next_cursor": "LTE=",
+  "count": 2,
+  "data": [
+    {
+      "enable_order_book": true,
+      "active": true,
+      "closed": false,
+      "archived": false,
+      "accepting_orders": true,
+      "condition_id": "0xlivecondition",
+      "question_id": "0xlivequestion",
+      "question": "Will this live-style fixture resolve Yes?",
+      "market_slug": "live-style-fixture",
+      "end_date_iso": "2026-12-31T00:00:00Z",
+      "tokens": [
+        {"token_id": "live_yes_token", "outcome": "Yes", "price": 0.61, "winner": false},
+        {"token_id": "live_no_token", "outcome": "No", "price": 0.39, "winner": false}
+      ],
+      "tags": ["fixture"]
+    },
+    {
+      "enable_order_book": true,
+      "active": false,
+      "closed": false,
+      "archived": false,
+      "condition_id": "0xinactive",
+      "question": "Inactive market should be ignored",
+      "market_slug": "inactive-fixture",
+      "tokens": [
+        {"token_id": "inactive_yes", "outcome": "Yes"}
+      ]
+    }
+  ]
+}

@@ -1,19 +1,22 @@
 bind_host: "127.0.0.1"
 port: 8765
-database_path: "data/poly_scan.example.db"
+database_path: "data/poly_scan.live.db"
 
 gamma_base_url: "https://gamma-api.polymarket.com"
 clob_base_url: "https://clob.polymarket.com"
-data_source: "fixtures"
-gamma_fixture_path: "spec/fixtures/gamma_event.json"
-clob_books_path: "spec/fixtures/books"
+data_source: "live"
+
+# Keep these small for a first real-data run. Increase after confirming the API responds.
+live_market_limit: 5
+live_book_limit: 10
+
+# Relationship rules are still manual. The example rules use fixture token IDs,
+# so they will not normally create live logical-bundle opportunities.
 relationships_path: "config/relationships.example.yml"
-live_market_limit: 25
-live_book_limit: 50
 
 scan_size: "1.000000"
 taker_fee_bps: 0
-max_book_age_ms: 31536000000
+max_book_age_ms: 300000
 max_spread: "0.080000"
 min_depth: "1.000000"
 slippage_buffer: "0.005000"
