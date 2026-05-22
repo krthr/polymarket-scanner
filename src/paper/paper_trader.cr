@@ -1,8 +1,11 @@
+require "json"
 require "../domain/models"
 
 module PolyScan
   module Paper
     class PaperTrade
+      include JSON::Serializable
+
       getter id : String
       getter opportunity_id : String
       getter status : String
@@ -12,18 +15,6 @@ module PolyScan
       getter created_at_unix_ms : Int64
 
       def initialize(@id : String, @opportunity_id : String, @status : String, @legs : Array(OpportunityLeg), @total_cost : Fixed, @expected_payout : Fixed, @created_at_unix_ms : Int64 = Time.utc.to_unix_ms)
-      end
-
-      def to_json(json : JSON::Builder) : Nil
-        json.object do
-          json.field "id", @id
-          json.field "opportunity_id", @opportunity_id
-          json.field "status", @status
-          json.field "legs", @legs
-          json.field "total_cost", @total_cost
-          json.field "expected_payout", @expected_payout
-          json.field "created_at_unix_ms", @created_at_unix_ms
-        end
       end
     end
 

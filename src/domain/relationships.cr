@@ -1,8 +1,12 @@
+require "json"
 require "yaml"
 require "./fixed"
 
 module PolyScan
+  @[JSON::Serializable::Options(emit_nulls: true)]
   class RelationshipRule
+    include JSON::Serializable
+
     getter id : String
     getter type : String
     getter description : String?
@@ -14,20 +18,6 @@ module PolyScan
     getter verified_exhaustive : Bool
 
     def initialize(@id : String, @type : String, @description : String?, @from_token_id : String?, @to_token_id : String?, @token_ids : Array(String), @confidence : Fixed, @quality : Fixed, @verified_exhaustive : Bool = false)
-    end
-
-    def to_json(json : JSON::Builder) : Nil
-      json.object do
-        json.field "id", @id
-        json.field "type", @type
-        json.field "description", @description
-        json.field "from_token_id", @from_token_id
-        json.field "to_token_id", @to_token_id
-        json.field "token_ids", @token_ids
-        json.field "confidence", @confidence
-        json.field "quality", @quality
-        json.field "verified_exhaustive", @verified_exhaustive
-      end
     end
   end
 

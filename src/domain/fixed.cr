@@ -25,6 +25,10 @@ module PolyScan
       new(atoms)
     end
 
+    def self.new(pull : JSON::PullParser) : Fixed
+      parse(pull.read_string)
+    end
+
     def self.parse(value : String) : Fixed
       s = value.strip
       raise ArgumentError.new("empty fixed decimal") if s.empty?
