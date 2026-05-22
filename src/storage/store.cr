@@ -1,4 +1,5 @@
 require "file_utils"
+require "micrate"
 require "sqlite3"
 require "../domain/models"
 require "../domain/relationships"
@@ -13,116 +14,20 @@ module PolyScan
       def initialize(@path : String)
         dir = File.dirname(@path)
         Dir.mkdir_p(dir) unless dir == "." || Dir.exists?(dir)
-        @db = DB.open(db_uri(@path))
-        migrate
+        run_migrations
+        @db = ::DB.open(db_uri(@path))
       end
 
       def close : Nil
         @db.close
       end
 
-      def migrate : Nil
-        @db.exec <<-SQL
-          create table if not exists events (
-            id text primary key,
-            slug text not null,
-            title text not null,
-            category text not null,
-            raw_json text not null,
-            updated_at_unix_ms integer not null
-          )
-        SQL
-        @db.exec <<-SQL
-          create table if not exists markets (
-            id text primary key,
-            event_id text not null,
-            slug text not null,
-            question text not null,
-            category text not null,
-            end_time text,
-            active integer not null,
-            raw_json text not null,
-            updated_at_unix_ms integer not null
-          )
-        SQL
-        @db.exec <<-SQL
-          create table if not exists outcomes (
-            id text primary key,
-            market_id text not null,
-            name text not null,
-            yes_token_id text not null,
-            no_token_id text,
-            p_hat_atoms integer,
-            confidence_atoms integer not null,
-            raw_json text not null,
-            updated_at_unix_ms integer not null
-          )
-        SQL
-        @db.exec <<-SQL
-          create table if not exists book_top (
-            token_id text primary key,
-            market_id text,
-            bid_price_atoms integer,
-            bid_size_atoms integer,
-            ask_price_atoms integer,
-            ask_size_atoms integer,
-            fetched_at_unix_ms integer not null,
-            updated_at_unix_ms integer not null
-          )
-        SQL
-        @db.exec <<-SQL
-          create table if not exists book_snapshots (
-            id integer primary key autoincrement,
-            token_id text not null,
-            market_id text,
-            raw_json text not null,
-            reason text not null,
-            fetched_at_unix_ms integer not null,
-            created_at_unix_ms integer not null
-          )
-        SQL
-        @db.exec <<-SQL
-          create table if not exists relationship_rules (
-            id text primary key,
-            type text not null,
-            raw_json text not null,
-            updated_at_unix_ms integer not null
-          )
-        SQL
-        @db.exec <<-SQL
-          create table if not exists signals (
-            id text primary key,
-            detector text not null,
-            market_id text,
-            status text not null,
-            edge_net_atoms integer not null,
-            score_atoms integer not null,
-            confidence_atoms integer not null,
-            raw_json text not null,
-            created_at_unix_ms integer not null
-          )
-        SQL
-        @db.exec <<-SQL
-          create table if not exists paper_trades (
-            id text primary key,
-            opportunity_id text not null,
-            status text not null,
-            total_cost_atoms integer not null,
-            expected_payout_atoms integer not null,
-            raw_json text not null,
-            created_at_unix_ms integer not null
-          )
-        SQL
-        @db.exec <<-SQL
-          create table if not exists alerts (
-            id text primary key,
-            channel text not null,
-            status text not null,
-            opportunity_id text,
-            raw_json text not null,
-            created_at_unix_ms integer not null
-          )
-        SQL
+      private def run_migrations : Nil
+        Micrate::DB.connection_url = db_uri(@path)
+        Micrate::DB.connect do |db|
+          result = Micrate.up(db)
+          raise "database migration failed" if result == :error
+        end
       end
 
       def save_events(events : Array(Event)) : Nil

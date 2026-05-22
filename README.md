@@ -36,6 +36,18 @@ To see current Polymarket listings instead of fixtures:
 
 Then open `http://127.0.0.1:8765/api/markets`. Live mode uses public read-only CLOB endpoints: `/sampling-markets` for discovery and `/book?token_id=...` for books. It still does not configure a wallet, private key, auth token, or order-placement endpoint.
 
+## Migrations
+
+Database schema changes are managed with [Micrate](https://github.com/amberframework/micrate). App startup automatically applies pending migrations from `db/migrations` before opening the configured SQLite database.
+
+For manual migration work, install the official `micrate` CLI and pass the SQLite connection with `DATABASE_URL`:
+
+```sh
+DATABASE_URL=sqlite3://./data/poly_scan.example.db micrate status
+DATABASE_URL=sqlite3://./data/poly_scan.example.db micrate up
+DATABASE_URL=sqlite3://./data/poly_scan.example.db micrate down
+```
+
 ## Configuration
 
 The app loads YAML from `--config PATH`, or from `POLY_SCAN_CONFIG` when no `--config` argument is provided. If neither is set, it uses `config/app.example.yml`.

@@ -17,6 +17,16 @@ describe "fixture scanner integration" do
       app.paper_trades.size.should eq(1)
       app.paper_trades.first.opportunity_id.should eq(implication.not_nil!.id)
       File.exists?("tmp/spec_poly_scan.db").should be_true
+
+      DB.open("sqlite3://./tmp/spec_poly_scan.db") do |db|
+        tables = db.query_all("select name from sqlite_master where type = 'table'", as: String)
+        %w(events markets outcomes book_top book_snapshots relationship_rules signals paper_trades alerts micrate_db_version).each do |table|
+          tables.should contain(table)
+        end
+
+        applied_migrations = db.query_one("select count(*) from micrate_db_version where is_applied = 1", as: Int64)
+        applied_migrations.should eq(9)
+      end
     ensure
       if previous_db
         ENV["POLY_SCAN_DATABASE_PATH"] = previous_db

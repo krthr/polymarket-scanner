@@ -11,6 +11,9 @@ targets:
     main: src/poly_scan.cr
 
 dependencies:
+  micrate:
+    github: amberframework/micrate
+    branch: master
   sqlite3:
     github: crystal-lang/crystal-sqlite3
 

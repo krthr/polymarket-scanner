@@ -4,6 +4,10 @@ shards:
     git: https://github.com/crystal-lang/crystal-db.git
     version: 0.14.0
 
+  micrate:
+    git: https://github.com/amberframework/micrate.git
+    version: 0.15.1+git.commit.647fac0490a522956fef305c720e8ebf1422a87d
+
   sqlite3:
     git: https://github.com/crystal-lang/crystal-sqlite3.git
     version: 0.23.0

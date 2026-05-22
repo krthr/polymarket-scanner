@@ -3,4 +3,5 @@
 /tmp/
 /data/
 /poly_scan
+/bin/micrate
 *.dwarf
