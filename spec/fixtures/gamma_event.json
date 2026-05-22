@@ -1,0 +1,82 @@
+{
+  "events": [
+    {
+      "id": "evt_weather_fixture",
+      "slug": "weather-fixture",
+      "title": "Weather fixture event",
+      "category": "Weather",
+      "markets": [
+        {
+          "id": "m_rain",
+          "slug": "rain-in-madrid-fixture",
+          "question": "Will it rain in Madrid on fixture day?",
+          "category": "Weather",
+          "endDate": "2026-07-01T00:00:00Z",
+          "active": true,
+          "outcomes": [
+            {
+              "id": "rain",
+              "name": "Rain in Madrid",
+              "yes_token_id": "yes_rain",
+              "no_token_id": "no_rain",
+              "p_hat": "0.410000",
+              "confidence": "0.780000"
+            }
+          ]
+        },
+        {
+          "id": "m_wet_ground",
+          "slug": "wet-ground-fixture",
+          "question": "Will official ground reports show wet ground after the fixture storm?",
+          "category": "Weather",
+          "endDate": "2026-07-01T00:00:00Z",
+          "active": true,
+          "outcomes": [
+            {
+              "id": "wet_ground",
+              "name": "Wet ground reported",
+              "yes_token_id": "yes_wet_ground",
+              "no_token_id": "no_wet_ground",
+              "p_hat": "0.650000",
+              "confidence": "0.820000"
+            }
+          ]
+        },
+        {
+          "id": "m_election",
+          "slug": "election-fixture",
+          "question": "Which fixture candidate wins?",
+          "category": "Politics",
+          "endDate": "2026-08-01T00:00:00Z",
+          "active": true,
+          "outcomes": [
+            {
+              "id": "candidate_a",
+              "name": "Candidate A",
+              "yes_token_id": "yes_candidate_a",
+              "no_token_id": "no_candidate_a",
+              "p_hat": "0.360000",
+              "confidence": "0.760000"
+            },
+            {
+              "id": "candidate_b",
+              "name": "Candidate B",
+              "yes_token_id": "yes_candidate_b",
+              "no_token_id": "no_candidate_b",
+              "p_hat": "0.330000",
+              "confidence": "0.740000"
+            },
+            {
+              "id": "candidate_c",
+              "name": "Candidate C",
+              "yes_token_id": "yes_candidate_c",
+              "no_token_id": "no_candidate_c",
+              "p_hat": "0.310000",
+              "confidence": "0.720000"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

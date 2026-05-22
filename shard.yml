@@ -1,0 +1,17 @@
+name: polymarket-scanner
+version: 0.1.0
+
+authors:
+  - Codex <codex@openai.com>
+
+crystal: ">= 1.20.2"
+
+targets:
+  poly_scan:
+    main: src/poly_scan.cr
+
+dependencies:
+  sqlite3:
+    github: crystal-lang/crystal-sqlite3
+
+license: MIT

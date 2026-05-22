@@ -1,0 +1,13 @@
+{
+  "token_id": "no_candidate_a",
+  "market_id": "m_election",
+  "outcome_name": "Candidate A NO",
+  "fetched_at_unix_ms": 1780000000000,
+  "sequence": 302,
+  "bids": [
+    {"price": "0.390000", "size": "5.000000"}
+  ],
+  "asks": [
+    {"price": "0.410000", "size": "5.000000"}
+  ]
+}

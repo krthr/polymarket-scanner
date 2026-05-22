@@ -1,0 +1,6 @@
+.DS_Store
+/lib/
+/tmp/
+/data/
+/poly_scan
+*.dwarf

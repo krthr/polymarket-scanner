@@ -1,0 +1,37 @@
+bind_host: "127.0.0.1"
+port: 8765
+database_path: "data/poly_scan.example.db"
+
+gamma_base_url: "https://gamma-api.polymarket.com"
+clob_base_url: "https://clob.polymarket.com"
+gamma_fixture_path: "spec/fixtures/gamma_event.json"
+clob_books_path: "spec/fixtures/books"
+relationships_path: "config/relationships.example.yml"
+
+scan_size: "1.000000"
+taker_fee_bps: 0
+max_book_age_ms: 31536000000
+max_spread: "0.080000"
+min_depth: "1.000000"
+slippage_buffer: "0.005000"
+uncertainty_penalty: "0.003000"
+resolution_penalty: "0.002000"
+stale_book_penalty: "0.010000"
+low_confidence_threshold: "0.600000"
+high_fee_threshold: "0.010000"
+imbalance_ratio: "3.000000"
+
+http:
+  timeout_ms: 5000
+  max_retries: 2
+  retry_backoff_ms: 250
+  retry_jitter_ms: 125
+  rate_limit_per_minute: 60
+
+paper_trading:
+  enabled: true
+
+telegram:
+  enabled: false
+  bot_token_env: "POLY_SCAN_TELEGRAM_BOT_TOKEN"
+  chat_id_env: "POLY_SCAN_TELEGRAM_CHAT_ID"

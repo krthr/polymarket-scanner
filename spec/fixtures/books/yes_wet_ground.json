@@ -1,0 +1,15 @@
+{
+  "token_id": "yes_wet_ground",
+  "market_id": "m_wet_ground",
+  "outcome_name": "Wet ground reported",
+  "fetched_at_unix_ms": 1780000000000,
+  "sequence": 201,
+  "bids": [
+    {"price": "0.500000", "size": "8.000000"},
+    {"price": "0.490000", "size": "4.000000"}
+  ],
+  "asks": [
+    {"price": "0.520000", "size": "3.000000"},
+    {"price": "0.530000", "size": "3.000000"}
+  ]
+}

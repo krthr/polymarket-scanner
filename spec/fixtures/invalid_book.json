@@ -1,0 +1,13 @@
+{
+  "token_id": "invalid_book",
+  "market_id": "m_invalid",
+  "outcome_name": "Invalid",
+  "fetched_at_unix_ms": 1780000000000,
+  "sequence": 1,
+  "bids": [
+    {"price": "1.100000", "size": "1.000000"}
+  ],
+  "asks": [
+    {"price": "0.900000", "size": "-1.000000"}
+  ]
+}

@@ -1,0 +1,46 @@
+rules:
+  - id: rain_implies_wet_ground
+    type: implication
+    description: "If the rain market resolves YES, wet-ground resolves YES."
+    from_token_id: "yes_rain"
+    to_token_id: "yes_wet_ground"
+    confidence: "0.950000"
+    quality: "0.900000"
+
+  - id: candidate_a_mutex_candidate_b
+    type: mutually_exclusive
+    description: "Candidate A and Candidate B cannot both win the same exactly-one election market."
+    token_ids:
+      - "yes_candidate_a"
+      - "yes_candidate_b"
+    confidence: "0.880000"
+    quality: "0.900000"
+
+  - id: election_exactly_one
+    type: exhaustive_group
+    description: "Manual rule: exactly one listed election outcome resolves YES."
+    token_ids:
+      - "yes_candidate_a"
+      - "yes_candidate_b"
+      - "yes_candidate_c"
+    confidence: "0.930000"
+    quality: "0.950000"
+    verified_exhaustive: true
+
+  - id: rain_yes_no_complement
+    type: complement
+    description: "Rain YES and Rain NO are complements."
+    token_ids:
+      - "yes_rain"
+      - "no_rain"
+    confidence: "0.980000"
+    quality: "0.950000"
+
+  - id: rain_wet_ground_correlated
+    type: correlated_group
+    description: "Rain and wet-ground are positively correlated but not exhaustive."
+    token_ids:
+      - "yes_rain"
+      - "yes_wet_ground"
+    confidence: "0.700000"
+    quality: "0.700000"
