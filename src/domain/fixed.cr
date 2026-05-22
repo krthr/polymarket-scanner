@@ -176,11 +176,19 @@ module PolyScan
 
     module YAMLConverter
       def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Fixed
+        unless node.is_a?(YAML::Nodes::Scalar)
+          node.raise "Expected quoted fixed-point scalar, not #{node.kind}"
+        end
+
+        unless node.style.quoted?
+          node.raise "fixed-point config value must be a quoted decimal string"
+        end
+
         Fixed.parse(node.value)
       end
 
-      def self.to_yaml(value : Fixed, yaml : YAML::Builder) : Nil
-        yaml.scalar(value.to_s)
+      def self.to_yaml(value : Fixed, yaml : YAML::Nodes::Builder) : Nil
+        yaml.scalar(value.format, style: YAML::ScalarStyle::DOUBLE_QUOTED)
       end
     end
   end
