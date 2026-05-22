@@ -150,7 +150,7 @@ module PolyScan
               <h1>Polymarket Inefficiency Scanner</h1>
               <div class="meta">read-only · #{escape(@config.bind_host)}:#{@config.port} · #{@opportunities.size} opportunities</div>
             </header>
-            #{rows.empty? ? %(<div class="empty">No opportunities generated from the current fixtures.</div>) : %(<table><thead><tr><th>ID</th><th>Detector</th><th>Status</th><th>Edge Net</th><th>Score</th><th>Risk Flags</th></tr></thead><tbody>#{rows}</tbody></table>)}
+            #{rows.empty? ? %(<div class="empty">No opportunities generated from the current real listings.</div>) : %(<table><thead><tr><th>ID</th><th>Detector</th><th>Status</th><th>Edge Net</th><th>Score</th><th>Risk Flags</th></tr></thead><tbody>#{rows}</tbody></table>)}
           </main>
         </body>
         </html>

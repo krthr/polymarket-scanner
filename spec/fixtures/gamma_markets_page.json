@@ -1,0 +1,48 @@
+{
+  "markets": [
+    {
+      "id": "540817",
+      "question": "New Rihanna Album before GTA VI?",
+      "conditionId": "0x1fad72fae204143ff1c3035e99e7c0f65ea8d5cd9bd1070987bd1a3316f772be",
+      "questionID": "0xquestion",
+      "slug": "new-rhianna-album-before-gta-vi-926",
+      "endDate": "2026-07-31T12:00:00Z",
+      "category": "Pop Culture",
+      "active": true,
+      "closed": false,
+      "archived": false,
+      "acceptingOrders": true,
+      "outcomes": "[\"Yes\", \"No\"]",
+      "clobTokenIds": "[\"98022490269692409998126496127597032490334070080325855126491859374983463996227\", \"53831553061883006530739877284105938919721408776239639687877978808906551086026\"]",
+      "events": [
+        {
+          "id": "23784",
+          "ticker": "what-will-happen-before-gta-vi",
+          "slug": "what-will-happen-before-gta-vi",
+          "title": "What will happen before GTA VI?",
+          "category": "Pop Culture"
+        }
+      ]
+    },
+    {
+      "id": "missing-tokens",
+      "question": "Listing without CLOB tokens?",
+      "conditionId": "0xmissingtokens",
+      "slug": "listing-without-clob-tokens",
+      "active": true,
+      "closed": false,
+      "archived": false,
+      "acceptingOrders": true,
+      "outcomes": "[\"Yes\", \"No\"]",
+      "events": [
+        {
+          "id": "missing-event",
+          "slug": "missing-event",
+          "title": "Missing Event",
+          "category": "Test"
+        }
+      ]
+    }
+  ],
+  "next_cursor": ""
+}

@@ -54,14 +54,20 @@ module PolyScan
 
     getter id : String
     getter event_id : String
+    getter gamma_id : String?
+    getter condition_id : String?
+    getter question_id : String?
     getter slug : String
     getter question : String
     getter category : String
     getter end_time : String?
     getter active : Bool
+    getter closed : Bool
+    getter archived : Bool
+    getter accepting_orders : Bool
     property outcomes : Array(Outcome)
 
-    def initialize(@id : String, @event_id : String, @slug : String, @question : String, @category : String, @end_time : String?, @active : Bool, @outcomes = [] of Outcome)
+    def initialize(@id : String, @event_id : String, @slug : String, @question : String, @category : String, @end_time : String?, @active : Bool, @outcomes = [] of Outcome, @gamma_id : String? = nil, @condition_id : String? = nil, @question_id : String? = nil, @closed : Bool = false, @archived : Bool = false, @accepting_orders : Bool = true)
     end
   end
 

@@ -18,8 +18,8 @@ while i < ARGV.size
     poly_scan [--config PATH] [--serve|--once]
 
       --config PATH  YAML config path. Defaults to POLY_SCAN_CONFIG or config/app.example.yml.
-      --serve        Run fixture scan and start the local dashboard/API.
-      --once         Run fixture scan, persist results, and print a summary.
+      --serve        Run a real read-only scan and start the local dashboard/API.
+      --once         Run a real read-only scan, persist results, and print a summary.
     HELP
     exit 0
   else

@@ -1,5 +1,6 @@
 require "log"
 require "./config"
+require "./market_data_provider"
 require "../alerts/telegram"
 require "../clients/clob_client"
 require "../clients/gamma_client"
@@ -23,21 +24,36 @@ module PolyScan
       getter opportunities : Array(Opportunity)
       getter signals : Array(Signal)
       getter paper_trades : Array(Paper::PaperTrade)
+      getter skipped_listings : Array(ListingSkip)
 
-      def initialize(@config : Config, @events : Array(Event), @markets : Array(Market), @books : OrderBookCache, @graph : RelationshipGraph, @opportunities : Array(Opportunity), @signals : Array(Signal), @paper_trades : Array(Paper::PaperTrade), @store : Storage::Store)
+      def initialize(@config : Config, @events : Array(Event), @markets : Array(Market), @books : OrderBookCache, @graph : RelationshipGraph, @opportunities : Array(Opportunity), @signals : Array(Signal), @paper_trades : Array(Paper::PaperTrade), @skipped_listings : Array(ListingSkip), @store : Storage::Store)
       end
 
       def self.boot(config_path : String) : Application
         Log.setup(:info)
         config = Config.load(config_path)
+        provider = real_provider(config)
+        boot(config, provider)
+      end
 
+      def self.boot_with_provider(config_path : String, provider : MarketDataProvider) : Application
+        Log.setup(:info)
+        boot(Config.load(config_path), provider)
+      end
+
+      private def self.real_provider(config : Config) : MarketDataProvider
         gamma_http = Clients::HttpClient.from_config(config.gamma_base_url, config)
         clob_http = Clients::HttpClient.from_config(config.clob_base_url, config)
-        Clients::GammaClient.new(gamma_http)
-        clob_client = Clients::ClobClient.new(clob_http)
+        RealPolymarketProvider.new(config, Clients::GammaClient.new(gamma_http), Clients::ClobClient.new(clob_http))
+      end
+
+      private def self.boot(config : Config, provider : MarketDataProvider) : Application
         Clients::WebSocketScaffold.new(false).start
 
-        events, markets, books = load_market_data(config, clob_client)
+        market_data = provider.load
+        events = market_data.events
+        markets = market_data.markets
+        books = market_data.books
         graph = RelationshipGraph.load(config.relationships_path)
 
         detector_context = Detectors::Context.new(config, markets, books, graph)
@@ -54,52 +70,7 @@ module PolyScan
         alert = Alerts::TelegramAlert.new(config.telegram_enabled, config.telegram_bot_token, config.telegram_chat_id)
         scan.opportunities.each { |opportunity| alert.notify(opportunity) }
 
-        new(config, events, markets, books, graph, scan.opportunities, scan.signals, paper_trades, store)
-      end
-
-      private def self.load_market_data(config : Config, clob_client : Clients::ClobClient) : Tuple(Array(Event), Array(Market), OrderBookCache)
-        case config.data_source
-        when "live"
-          load_live_market_data(config, clob_client)
-        else
-          load_fixture_market_data(config)
-        end
-      end
-
-      private def self.load_fixture_market_data(config : Config) : Tuple(Array(Event), Array(Market), OrderBookCache)
-        events = Clients::GammaClient.events_from_file(config.gamma_fixture_path)
-        markets = events.flat_map(&.markets)
-        books = OrderBookCache.new
-        Clients::ClobClient.books_from_dir(config.clob_books_path).each { |book| books.put(book) }
-        {events, markets, books}
-      end
-
-      private def self.load_live_market_data(config : Config, clob_client : Clients::ClobClient) : Tuple(Array(Event), Array(Market), OrderBookCache)
-        markets = clob_client.fetch_sampling_markets(config.live_market_limit)
-        event = Event.new("clob-live", "clob-live", "Live CLOB markets", "live", markets)
-        books = OrderBookCache.new
-
-        live_token_ids(markets).first(config.live_book_limit).each do |token_id|
-          begin
-            books.put(clob_client.fetch_book(token_id))
-          rescue ex
-            Log.warn { %({"event":"live_book_fetch_failed","token_id":#{token_id.to_json},"error":#{ex.message.to_json}}) }
-          end
-        end
-
-        {[event], markets, books}
-      end
-
-      private def self.live_token_ids(markets : Array(Market)) : Array(String)
-        markets.flat_map do |market|
-          market.outcomes.flat_map do |outcome|
-            ids = [outcome.yes_token_id]
-            if no_token_id = outcome.no_token_id
-              ids << no_token_id
-            end
-            ids
-          end
-        end.uniq
+        new(config, events, markets, books, graph, scan.opportunities, scan.signals, paper_trades, market_data.skipped_listings, store)
       end
 
       def serve : Nil
@@ -107,7 +78,7 @@ module PolyScan
       end
 
       def print_summary : Nil
-        puts "events=#{@events.size} markets=#{@markets.size} books=#{@books.size} rules=#{@graph.rules.size} opportunities=#{@opportunities.size} signals=#{@signals.size} paper_trades=#{@paper_trades.size}"
+        puts "events=#{@events.size} markets=#{@markets.size} books=#{@books.size} skipped_listings=#{@skipped_listings.size} rules=#{@graph.rules.size} opportunities=#{@opportunities.size} signals=#{@signals.size} paper_trades=#{@paper_trades.size}"
         @opportunities.each do |opp|
           puts "#{opp.id} status=#{opp.status} edge_net=#{opp.edge_net} score=#{opp.score}"
         end

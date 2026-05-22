@@ -19,7 +19,13 @@ describe "internal model JSON serialization" do
       category: "test",
       end_time: nil,
       active: true,
-      outcomes: [outcome]
+      outcomes: [outcome],
+      gamma_id: "gamma-market-1",
+      condition_id: "condition-market-1",
+      question_id: "question-market-1",
+      closed: false,
+      archived: false,
+      accepting_orders: true
     )
     event = PolyScan::Event.new("event-1", "event-one", "Event One", "test", [market])
 
@@ -29,6 +35,12 @@ describe "internal model JSON serialization" do
 
     market_json.has_key?("end_time").should be_true
     market_json["end_time"].raw.should be_nil
+    market_json["gamma_id"].as_s.should eq("gamma-market-1")
+    market_json["condition_id"].as_s.should eq("condition-market-1")
+    market_json["question_id"].as_s.should eq("question-market-1")
+    market_json["closed"].as_bool.should be_false
+    market_json["archived"].as_bool.should be_false
+    market_json["accepting_orders"].as_bool.should be_true
     outcome_json.has_key?("no_token_id").should be_true
     outcome_json["no_token_id"].raw.should be_nil
     outcome_json.has_key?("p_hat").should be_true
@@ -36,6 +48,8 @@ describe "internal model JSON serialization" do
     outcome_json["confidence"].as_s.should eq("0.75")
 
     round_trip = PolyScan::Event.from_json(event.to_json)
+    round_trip.markets.first.condition_id.should eq("condition-market-1")
+    round_trip.markets.first.accepting_orders.should be_true
     round_trip.markets.first.outcomes.first.confidence.should eq(fp("0.750000"))
   end
 

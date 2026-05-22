@@ -45,8 +45,8 @@ module PolyScan
         outcome_name = optional_string(node, "outcome_name")
         fetched_at = timestamp_ms(node)
         sequence = int64(node, "sequence", 0_i64)
-        bids = parse_levels(node["bids"]?)
-        asks = parse_levels(node["asks"]?)
+        bids = parse_levels(node["bids"]?).sort_by { |level| -level.price.atoms }
+        asks = parse_levels(node["asks"]?).sort_by { |level| level.price.atoms }
         OrderBook.new(token_id, market_id, outcome_name, bids, asks, fetched_at, sequence)
       end
 
@@ -59,6 +59,7 @@ module PolyScan
         return nil unless bool(node, "active", false)
         return nil if bool(node, "closed", false)
         return nil if bool(node, "archived", false)
+        return nil unless bool(node, "accepting_orders", true)
         return nil unless bool(node, "enable_order_book", true)
 
         market_id = optional_string(node, "condition_id") || optional_string(node, "question_id") || optional_string(node, "market_slug")
@@ -67,7 +68,21 @@ module PolyScan
         slug = optional_string(node, "market_slug") || market_id
         question = optional_string(node, "question") || slug
         end_time = optional_string(node, "end_date_iso")
-        market = Market.new(market_id, "clob-live", slug, question, "live", end_time, true)
+        question_id = optional_string(node, "question_id")
+        market = Market.new(
+          id: market_id,
+          event_id: "clob-sampling",
+          slug: slug,
+          question: question,
+          category: "live",
+          end_time: end_time,
+          active: true,
+          condition_id: optional_string(node, "condition_id"),
+          question_id: question_id,
+          closed: false,
+          archived: false,
+          accepting_orders: true
+        )
 
         tokens = node["tokens"]?.try(&.as_a) || [] of JSON::Any
         market.outcomes = outcomes_from_tokens(market, tokens)
