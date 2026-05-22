@@ -10,6 +10,16 @@ module PolyScan
     Priority
   end
 
+  module SignalStatusJSONConverter
+    def self.from_json(pull : JSON::PullParser) : SignalStatus
+      SignalStatus.parse(pull.read_string)
+    end
+
+    def self.to_json(value : SignalStatus, json : JSON::Builder) : Nil
+      json.string(value.to_s)
+    end
+  end
+
   module RiskFlags
     STALE_BOOK                = "stale book"
     LOW_DEPTH                 = "low depth"
@@ -26,6 +36,8 @@ module PolyScan
   end
 
   class Event
+    include JSON::Serializable
+
     getter id : String
     getter slug : String
     getter title : String
@@ -34,19 +46,12 @@ module PolyScan
 
     def initialize(@id : String, @slug : String, @title : String, @category : String, @markets = [] of Market)
     end
-
-    def to_json(json : JSON::Builder) : Nil
-      json.object do
-        json.field "id", @id
-        json.field "slug", @slug
-        json.field "title", @title
-        json.field "category", @category
-        json.field "markets", @markets
-      end
-    end
   end
 
+  @[JSON::Serializable::Options(emit_nulls: true)]
   class Market
+    include JSON::Serializable
+
     getter id : String
     getter event_id : String
     getter slug : String
@@ -58,22 +63,12 @@ module PolyScan
 
     def initialize(@id : String, @event_id : String, @slug : String, @question : String, @category : String, @end_time : String?, @active : Bool, @outcomes = [] of Outcome)
     end
-
-    def to_json(json : JSON::Builder) : Nil
-      json.object do
-        json.field "id", @id
-        json.field "event_id", @event_id
-        json.field "slug", @slug
-        json.field "question", @question
-        json.field "category", @category
-        json.field "end_time", @end_time
-        json.field "active", @active
-        json.field "outcomes", @outcomes
-      end
-    end
   end
 
+  @[JSON::Serializable::Options(emit_nulls: true)]
   class Outcome
+    include JSON::Serializable
+
     getter id : String
     getter market_id : String
     getter name : String
@@ -85,37 +80,22 @@ module PolyScan
 
     def initialize(@id : String, @market_id : String, @name : String, @yes_token_id : String, @no_token_id : String?, @p_hat : Fixed?, @confidence : Fixed, @external_source_stale : Bool = false)
     end
-
-    def to_json(json : JSON::Builder) : Nil
-      json.object do
-        json.field "id", @id
-        json.field "market_id", @market_id
-        json.field "name", @name
-        json.field "yes_token_id", @yes_token_id
-        json.field "no_token_id", @no_token_id
-        json.field "p_hat", @p_hat
-        json.field "confidence", @confidence
-        json.field "external_source_stale", @external_source_stale
-      end
-    end
   end
 
   class BookLevel
+    include JSON::Serializable
+
     getter price : Fixed
     getter size : Fixed
 
     def initialize(@price : Fixed, @size : Fixed)
     end
-
-    def to_json(json : JSON::Builder) : Nil
-      json.object do
-        json.field "price", @price
-        json.field "size", @size
-      end
-    end
   end
 
+  @[JSON::Serializable::Options(emit_nulls: true)]
   class OrderBook
+    include JSON::Serializable
+
     getter token_id : String
     getter market_id : String?
     getter outcome_name : String?
@@ -182,21 +162,14 @@ module PolyScan
       end
     end
 
-    def to_json(json : JSON::Builder) : Nil
-      json.object do
-        json.field "token_id", @token_id
-        json.field "market_id", @market_id
-        json.field "outcome_name", @outcome_name
-        json.field "bids", @bids
-        json.field "asks", @asks
-        json.field "fetched_at_unix_ms", @fetched_at_unix_ms
-        json.field "sequence", @sequence
-        json.field "validation_errors", validation_errors
-      end
+    protected def on_to_json(json : JSON::Builder) : Nil
+      json.field "validation_errors", validation_errors
     end
   end
 
   class OpportunityLeg
+    include JSON::Serializable
+
     getter action : String
     getter token_id : String
     getter label : String
@@ -212,24 +185,19 @@ module PolyScan
       @notional + @fee
     end
 
-    def to_json(json : JSON::Builder) : Nil
-      json.object do
-        json.field "action", @action
-        json.field "token_id", @token_id
-        json.field "label", @label
-        json.field "size", @size
-        json.field "vwap_price", @vwap_price
-        json.field "notional", @notional
-        json.field "fee", @fee
-        json.field "total_cost", total_cost
-      end
+    protected def on_to_json(json : JSON::Builder) : Nil
+      json.field "total_cost", total_cost
     end
   end
 
+  @[JSON::Serializable::Options(emit_nulls: true)]
   class Opportunity
+    include JSON::Serializable
+
     getter id : String
     getter detector : String
     getter rule_id : String?
+    @[JSON::Field(converter: PolyScan::SignalStatusJSONConverter)]
     getter status : SignalStatus
     getter gross_edge : Fixed
     getter fees : Fixed
@@ -253,33 +221,21 @@ module PolyScan
       total_notional + @fees
     end
 
-    def to_json(json : JSON::Builder) : Nil
-      json.object do
-        json.field "id", @id
-        json.field "detector", @detector
-        json.field "rule_id", @rule_id
-        json.field "status", @status.to_s
-        json.field "gross_edge", @gross_edge
-        json.field "fees", @fees
-        json.field "edge_net", @edge_net
-        json.field "score", @score
-        json.field "confidence", @confidence
-        json.field "risk_flags", @risk_flags
-        json.field "legs", @legs
-        json.field "rationale", @rationale
-        json.field "payout_floor", @payout_floor
-        json.field "total_notional", total_notional
-        json.field "total_cost", total_cost
-        json.field "created_at_unix_ms", @created_at_unix_ms
-      end
+    protected def on_to_json(json : JSON::Builder) : Nil
+      json.field "total_notional", total_notional
+      json.field "total_cost", total_cost
     end
   end
 
+  @[JSON::Serializable::Options(emit_nulls: true)]
   class Signal
+    include JSON::Serializable
+
     getter id : String
     getter detector : String
     getter market_id : String?
     getter token_ids : Array(String)
+    @[JSON::Field(converter: PolyScan::SignalStatusJSONConverter)]
     getter status : SignalStatus
     getter edge_net : Fixed
     getter score : Fixed
@@ -289,22 +245,6 @@ module PolyScan
     getter created_at_unix_ms : Int64
 
     def initialize(@id : String, @detector : String, @market_id : String?, @token_ids : Array(String), @status : SignalStatus, @edge_net : Fixed, @score : Fixed, @confidence : Fixed, @risk_flags : Array(String), @rationale : String, @created_at_unix_ms : Int64 = Time.utc.to_unix_ms)
-    end
-
-    def to_json(json : JSON::Builder) : Nil
-      json.object do
-        json.field "id", @id
-        json.field "detector", @detector
-        json.field "market_id", @market_id
-        json.field "token_ids", @token_ids
-        json.field "status", @status.to_s
-        json.field "edge_net", @edge_net
-        json.field "score", @score
-        json.field "confidence", @confidence
-        json.field "risk_flags", @risk_flags
-        json.field "rationale", @rationale
-        json.field "created_at_unix_ms", @created_at_unix_ms
-      end
     end
   end
 end
