@@ -4,14 +4,13 @@ database_path: "data/poly_scan.live.db"
 
 gamma_base_url: "https://gamma-api.polymarket.com"
 clob_base_url: "https://clob.polymarket.com"
-data_source: "live"
 
-# Keep these small for a first real-data run. Increase after confirming the API responds.
-live_market_limit: 5
-live_book_limit: 10
+# Same real-listing-only runtime as app.example.yml, with small limits for probes.
+market_limit: 5
+book_limit: 10
 
-# Relationship rules are still manual. The example rules use fixture token IDs,
-# so they will not normally create live logical-bundle opportunities.
+# Relationship rules are still manual. Example rules must reference token IDs
+# from the real listings loaded in the current run to create opportunities.
 relationships_path: "config/relationships.example.yml"
 
 scan_size: "1.000000"

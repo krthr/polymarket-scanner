@@ -8,7 +8,8 @@ describe "fixture scanner integration" do
     ENV["POLY_SCAN_DATABASE_PATH"] = "tmp/spec_poly_scan.db"
 
     begin
-      app = PolyScan::App::Application.boot("config/app.example.yml")
+      provider = PolyScan::App::FixtureMarketDataProvider.new("spec/fixtures/gamma_event.json", "spec/fixtures/books")
+      app = PolyScan::App::Application.boot_with_provider("config/app.example.yml", provider)
       implication = app.opportunities.find { |opp| opp.detector == "Implication" }
       implication.should_not be_nil
       implication.not_nil!.edge_net.should be > fp("0")
@@ -24,8 +25,13 @@ describe "fixture scanner integration" do
           tables.should contain(table)
         end
 
+        market_columns = db.query_all("pragma table_info(markets)", as: {Int64, String, String, Int64, String?, Int64}).map { |row| row[1] }
+        %w(gamma_id condition_id question_id closed archived accepting_orders).each do |column|
+          market_columns.should contain(column)
+        end
+
         applied_migrations = db.query_one("select count(*) from micrate_db_version where is_applied = 1", as: Int64)
-        applied_migrations.should eq(9)
+        applied_migrations.should eq(10)
       end
     ensure
       if previous_db

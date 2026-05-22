@@ -5,6 +5,8 @@ private CONFIG_ENV_KEYS = %w(
   POLY_SCAN_PORT
   POLY_SCAN_DATABASE_PATH
   POLY_SCAN_RELATIONSHIPS_PATH
+  POLY_SCAN_MARKET_LIMIT
+  POLY_SCAN_BOOK_LIMIT
   POLY_SCAN_DATA_SOURCE
   POLY_SCAN_ALLOW_PUBLIC_BIND
   POLY_SCAN_TEST_TELEGRAM_TOKEN
@@ -49,7 +51,8 @@ describe PolyScan::App::Config do
     with_config_env({
       "POLY_SCAN_DATABASE_PATH"      => "tmp/env-config.db",
       "POLY_SCAN_RELATIONSHIPS_PATH" => "tmp/relationships.yml",
-      "POLY_SCAN_DATA_SOURCE"        => "live",
+      "POLY_SCAN_MARKET_LIMIT"       => "7",
+      "POLY_SCAN_BOOK_LIMIT"         => "11",
     }) do
       config = PolyScan::App::Config.load("tmp/does-not-exist.yml")
 
@@ -57,7 +60,8 @@ describe PolyScan::App::Config do
       config.port.should eq(8765)
       config.database_path.should eq("tmp/env-config.db")
       config.relationships_path.should eq("tmp/relationships.yml")
-      config.data_source.should eq("live")
+      config.market_limit.should eq(7)
+      config.book_limit.should eq(11)
       config.http_timeout_ms.should eq(5_000)
       config.paper_trading_enabled.should be_true
       config.telegram_bot_token.should be_nil
@@ -74,7 +78,8 @@ describe PolyScan::App::Config do
         bind_host: "127.0.0.1"
         port: 9876
         database_path: "tmp/config-spec.db"
-        data_source: "fixtures"
+        market_limit: 12
+        book_limit: 34
         scan_size: "2.500000"
         max_spread: "0.070000"
         http:
@@ -93,6 +98,8 @@ describe PolyScan::App::Config do
         config = PolyScan::App::Config.load(path)
 
         config.port.should eq(9876)
+        config.market_limit.should eq(12)
+        config.book_limit.should eq(34)
         config.scan_size.should eq(fp("2.500000"))
         config.max_spread.should eq(fp("0.070000"))
         config.http_timeout_ms.should eq(1234)
@@ -156,15 +163,9 @@ describe PolyScan::App::Config do
   end
 
   it "rejects invalid semantic values after deserialization and environment overrides" do
-    with_config_env({"POLY_SCAN_DATA_SOURCE" => "invalid"}) do
-      with_config_file(<<-YAML) do |path|
-        data_source: "fixtures"
-        http:
-          rate_limit_per_minute: 60
-        YAML
-        expect_raises(ArgumentError, "data_source must be fixtures or live") do
-          PolyScan::App::Config.load(path)
-        end
+    with_config_env({"POLY_SCAN_DATA_SOURCE" => "fixtures"}) do
+      expect_raises(ArgumentError, /POLY_SCAN_DATA_SOURCE is no longer supported/) do
+        PolyScan::App::Config.load("tmp/does-not-exist.yml")
       end
     end
 
@@ -174,6 +175,48 @@ describe PolyScan::App::Config do
           rate_limit_per_minute: 0
         YAML
         expect_raises(ArgumentError, "rate_limit_per_minute must be positive") do
+          PolyScan::App::Config.load(path)
+        end
+      end
+    end
+
+    with_config_env do
+      with_config_file(<<-YAML) do |path|
+        market_limit: 0
+        YAML
+        expect_raises(ArgumentError, "market_limit must be positive") do
+          PolyScan::App::Config.load(path)
+        end
+      end
+    end
+
+    with_config_env({"POLY_SCAN_BOOK_LIMIT" => "0"}) do
+      expect_raises(ArgumentError, "book_limit must be positive") do
+        PolyScan::App::Config.load("tmp/does-not-exist.yml")
+      end
+    end
+  end
+
+  it "rejects legacy fixture runtime configuration keys" do
+    with_config_env do
+      with_config_file(%(data_source: "fixtures"\n)) do |path|
+        expect_raises(ArgumentError, /data_source is no longer supported/) do
+          PolyScan::App::Config.load(path)
+        end
+      end
+    end
+  end
+
+  it "rejects legacy fixture paths in production config" do
+    with_config_env do
+      with_config_file(%(gamma_fixture_path: "spec/fixtures/gamma_event.json"\n)) do |path|
+        expect_raises(ArgumentError, /gamma_fixture_path is no longer supported/) do
+          PolyScan::App::Config.load(path)
+        end
+      end
+
+      with_config_file(%(clob_books_path: "spec/fixtures/books"\n)) do |path|
+        expect_raises(ArgumentError, /clob_books_path is no longer supported/) do
           PolyScan::App::Config.load(path)
         end
       end

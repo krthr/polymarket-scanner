@@ -112,8 +112,22 @@ module PolyScan
 
       private def save_market(market : Market, now : Int64) : Nil
         @db.exec(
-          "insert or replace into markets (id, event_id, slug, question, category, end_time, active, raw_json, updated_at_unix_ms) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          market.id, market.event_id, market.slug, market.question, market.category, market.end_time, market.active ? 1 : 0, market.to_json, now
+          "insert or replace into markets (id, event_id, gamma_id, condition_id, question_id, slug, question, category, end_time, active, closed, archived, accepting_orders, raw_json, updated_at_unix_ms) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          market.id,
+          market.event_id,
+          market.gamma_id,
+          market.condition_id,
+          market.question_id,
+          market.slug,
+          market.question,
+          market.category,
+          market.end_time,
+          market.active ? 1 : 0,
+          market.closed ? 1 : 0,
+          market.archived ? 1 : 0,
+          market.accepting_orders ? 1 : 0,
+          market.to_json,
+          now
         )
         market.outcomes.each do |outcome|
           @db.exec(

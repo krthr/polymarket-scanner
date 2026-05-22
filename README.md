@@ -1,6 +1,6 @@
 # Polymarket Inefficiency Scanner
 
-Private, read-only Crystal scanner for fixture-backed Polymarket market-relationship analysis.
+Private, read-only Crystal scanner for real Polymarket market-relationship analysis.
 
 ## Safety Defaults
 
@@ -8,7 +8,8 @@ Private, read-only Crystal scanner for fixture-backed Polymarket market-relation
 - No wallet or private-key configuration.
 - No authenticated trading endpoints.
 - Dashboard/API binds to `127.0.0.1` by default.
-- Live HTTP clients are GET-only scaffolds; the example app path uses fixtures.
+- Production runtime uses public read-only Polymarket Gamma listings and CLOB books.
+- Fixture data is limited to specs and explicitly injected test helpers.
 - Trading-critical values use `PolyScan::Fixed` fixed-point integer math.
 
 ## Run
@@ -28,13 +29,13 @@ Then open:
 - `http://127.0.0.1:8765/api/opportunities`
 - `http://127.0.0.1:8765/api/paper-trades`
 
-To see current Polymarket listings instead of fixtures:
+For a smaller real-data probe:
 
 ```sh
 ./poly_scan --config config/live.example.yml --serve
 ```
 
-Then open `http://127.0.0.1:8765/api/markets`. Live mode uses public read-only CLOB endpoints: `/sampling-markets` for discovery and `/book?token_id=...` for books. It still does not configure a wallet, private key, auth token, or order-placement endpoint.
+Then open `http://127.0.0.1:8765/api/markets`. The app uses public read-only Gamma market listings for discovery and public CLOB `/book?token_id=...` responses for executable book data. It does not configure a wallet, private key, auth token, or order-placement endpoint.
 
 ## Migrations
 
@@ -63,14 +64,11 @@ Top-level options:
 | `bind_host` | `"127.0.0.1"` | Dashboard/API bind host. Non-loopback binds are rejected unless `POLY_SCAN_ALLOW_PUBLIC_BIND=true` is set. |
 | `port` | `8765` | Dashboard/API TCP port. |
 | `database_path` | `"data/poly_scan.db"` | SQLite database file path. Parent directories are created automatically. |
-| `gamma_base_url` | `"https://gamma-api.polymarket.com"` | Base URL for the read-only Gamma discovery client. The default app flow still uses fixtures. |
-| `clob_base_url` | `"https://clob.polymarket.com"` | Base URL for the read-only CLOB book client. The default app flow still uses fixtures. |
-| `data_source` | `"fixtures"` | `fixtures` loads local JSON fixtures. `live` fetches public read-only CLOB `/sampling-markets` and `/book` data. |
-| `gamma_fixture_path` | `"spec/fixtures/gamma_event.json"` | Fixture file used to load events, markets, and outcomes. |
-| `clob_books_path` | `"spec/fixtures/books"` | Directory containing CLOB order-book JSON fixtures. |
+| `gamma_base_url` | `"https://gamma-api.polymarket.com"` | Base URL for the read-only Gamma listing client. |
+| `clob_base_url` | `"https://clob.polymarket.com"` | Base URL for the read-only CLOB book client. |
 | `relationships_path` | `"config/relationships.example.yml"` | Manual relationship-rule YAML file. |
-| `live_market_limit` | `25` | Maximum live CLOB markets to fetch from `/sampling-markets`. |
-| `live_book_limit` | `50` | Maximum live token books to fetch from `/book`. Binary markets can use two token books each. |
+| `market_limit` | `25` | Maximum real Polymarket listings to fetch from Gamma market APIs. |
+| `book_limit` | `50` | Maximum real CLOB token books to fetch from `/book`. Binary markets can use two token books each. |
 | `scan_size` | `"1.000000"` | Fixed-point size used for executable VWAP checks and paper-trade legs. Must be positive. |
 | `taker_fee_bps` | `0` | Taker fee in basis points. Fee is computed on `min(price, 1-price) * size`. |
 | `max_book_age_ms` | `300000` | Maximum book age before stale-book risk and stale penalties apply. |
@@ -117,8 +115,11 @@ Environment overrides:
 | `POLY_SCAN_PORT` | Overrides `port`. |
 | `POLY_SCAN_DATABASE_PATH` | Overrides `database_path`. |
 | `POLY_SCAN_RELATIONSHIPS_PATH` | Overrides `relationships_path`. |
-| `POLY_SCAN_DATA_SOURCE` | Overrides `data_source`; use `live` for current public CLOB data. |
+| `POLY_SCAN_MARKET_LIMIT` | Overrides `market_limit`. |
+| `POLY_SCAN_BOOK_LIMIT` | Overrides `book_limit`. |
 | `POLY_SCAN_ALLOW_PUBLIC_BIND` | Set to `true` to permit a non-`127.0.0.1` bind. Leave unset for private local use. |
+
+Legacy runtime fixture keys (`data_source`, `gamma_fixture_path`, and `clob_books_path`) are rejected in production config. Parser fixtures remain available to specs.
 
 Example:
 
@@ -138,7 +139,7 @@ Manual relationship rules live in `config/relationships.example.yml` and support
 - `complement`
 - `correlated_group`
 
-The scanner does not infer exhaustiveness from market titles. Use `verified_exhaustive: true` only for manually checked exactly-one groups.
+Production rules must reference token IDs present in the loaded real Polymarket listings. The scanner does not infer exhaustiveness from market titles. Use `verified_exhaustive: true` only for manually checked exactly-one groups.
 
 Rule fields:
 

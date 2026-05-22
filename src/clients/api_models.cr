@@ -235,8 +235,8 @@ module PolyScan
             @token_id || @asset_id || "token-unknown",
             @market_id || @market,
             @outcome_name,
-            @bids.map(&.to_domain),
-            @asks.map(&.to_domain),
+            @bids.map(&.to_domain).sort_by { |level| -level.price.atoms },
+            @asks.map(&.to_domain).sort_by { |level| level.price.atoms },
             timestamp_ms,
             @sequence || 0_i64
           )
@@ -291,6 +291,8 @@ module PolyScan
         getter active : Bool?
         getter closed : Bool?
         getter archived : Bool?
+        @[JSON::Field(key: "accepting_orders")]
+        getter accepting_orders : Bool?
         @[JSON::Field(key: "condition_id", converter: APIModels::StringLikeConverter)]
         getter condition_id : String?
         @[JSON::Field(key: "question_id", converter: APIModels::StringLikeConverter)]
@@ -307,19 +309,25 @@ module PolyScan
           return nil unless bool(@active, false)
           return nil if bool(@closed, false)
           return nil if bool(@archived, false)
+          return nil unless bool(@accepting_orders, true)
           return nil unless bool(@enable_order_book, true)
 
           market_id = @condition_id || @question_id || @market_slug
           return nil unless market_id
 
           market = Market.new(
-            market_id,
-            "clob-live",
-            @market_slug || market_id,
-            @question || @market_slug || market_id,
-            "live",
-            @end_date_iso,
-            true
+            id: market_id,
+            event_id: "clob-sampling",
+            slug: @market_slug || market_id,
+            question: @question || @market_slug || market_id,
+            category: "live",
+            end_time: @end_date_iso,
+            active: true,
+            condition_id: @condition_id,
+            question_id: @question_id,
+            closed: false,
+            archived: false,
+            accepting_orders: true
           )
           market.outcomes = domain_outcomes(market)
           return nil if market.outcomes.empty?
